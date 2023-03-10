@@ -44,6 +44,8 @@ class Config:
     NUM_DECODER_LAYERS = 4
     MAX_LEN = 30
     NUM_EPOCHS = 30
+    DEVICE = 'cuda:1'
+    BATCH_FIRST = True
 
     # Checkpoint Path
     CHECKPOINT_FOLDER = 'checkpoints/'

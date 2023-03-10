@@ -120,8 +120,8 @@ class DataClass:
             src_batch.append(DataClass.text_transform_map()['src'](src_sample))
             tgt_batch.append(DataClass.text_transform_map()['tgt'](tgt_sample))
 
-        src_batch = pad_sequence(src_batch, padding_value=PolynomialVocab.PAD_INDEX)
-        tgt_batch = pad_sequence(tgt_batch, padding_value=PolynomialVocab.PAD_INDEX)
+        src_batch = pad_sequence(src_batch, padding_value=PolynomialVocab.PAD_INDEX, batch_first=config.Config.BATCH_FIRST)
+        tgt_batch = pad_sequence(tgt_batch, padding_value=PolynomialVocab.PAD_INDEX, batch_first=config.Config.BATCH_FIRST)
         return src_batch, tgt_batch
 
     @staticmethod
@@ -129,7 +129,7 @@ class DataClass:
         return DataLoader(dataset=DataClass.train_dataset, 
                           batch_size=config.Config.BATCH_SIZE, 
                           collate_fn=DataClass.collate_fn,
-                          shuffle=True)
+                          shuffle=False)
 
     @staticmethod
     def val_dataloader():

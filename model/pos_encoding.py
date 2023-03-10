@@ -1,12 +1,14 @@
-import torch
+ #import torch
 from torch import Tensor
 import torch.nn as nn
+import torch
 import math
 import sys
 
 sys.path.insert(0, '../')
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+import config
+DEVICE = config.Config.DEVICE
 
 class PositionalEncoding(nn.Module):
     def __init__(self,
@@ -27,6 +29,20 @@ class PositionalEncoding(nn.Module):
         self.register_buffer('pos_embedding', pos_embedding)
 
     def forward(self, token_embedding: Tensor):
-        return self.dropout(token_embedding + self.pos_embedding[:token_embedding.size(0), :])
+        # print('token_embedding', token_embedding.shape)
+        if config.Config.BATCH_FIRST:
+            token_embedding = token_embedding.permute(1, 0, 2) # B, SEQ_LEN, D --> SEQ_LEN, B, D
+        # print('token_embedding updated', token_embedding.shape)
+        out =  self.dropout(token_embedding + self.pos_embedding[:token_embedding.size(0), :])
+
+        # print('out init', out.shape)
+
+        if config.Config.BATCH_FIRST:
+            out = out.permute(1, 0, 2) # SEQ_LEN, B, D ---> B, SEQ_LEN, D
+
+        # print('out final', out.shape)
+
+        return out
+
 
 

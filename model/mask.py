@@ -5,7 +5,8 @@ import sys
 
 sys.path.insert(0, '../')
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+import config
+DEVICE = config.Config.DEVICE
 
 class MaskUtils:
         
@@ -18,9 +19,25 @@ class MaskUtils:
 
     def create_mask(src, tgt):
         """Creates Source/Target Padding Masks, and Target Mask for Masked-Self Attention"""
+
+        if config.Config.BATCH_FIRST is False:
+            return MaskUtils.create_mask_batch_first_false(src, tgt)
+
+        src_seq_len = src.shape[-1]
+        tgt_seq_len = tgt.shape[-1]
+        
+        tgt_mask = MaskUtils.generate_square_subsequent_mask(tgt_seq_len)
+        src_mask = torch.zeros((src_seq_len, src_seq_len),device=DEVICE).type(torch.bool)
+
+        src_padding_mask = (src == PolynomialVocab.PAD_INDEX) 
+        tgt_padding_mask = (tgt == PolynomialVocab.PAD_INDEX)
+        return src_mask, tgt_mask, src_padding_mask, tgt_padding_mask
+
+    def create_mask_batch_first_false(src, tgt):
+        """Creates Source/Target Padding Masks, and Target Mask for Masked-Self Attention"""
         src_seq_len = src.shape[0]
         tgt_seq_len = tgt.shape[0]
-
+        
         tgt_mask = MaskUtils.generate_square_subsequent_mask(tgt_seq_len)
         src_mask = torch.zeros((src_seq_len, src_seq_len),device=DEVICE).type(torch.bool)
 

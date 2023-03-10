@@ -6,7 +6,9 @@ import torch.nn as nn
 import math
 
 sys.path.insert(0, '../')
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+import config
+DEVICE = config.Config.DEVICE
 
 class TokenEmbedding(nn.Module):
     def __init__(self, vocab_size: int, emb_size):

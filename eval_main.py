@@ -19,12 +19,14 @@ DEVICE = 'cpu' # CPU Inference
 SRC_VOCAB_SIZE = src_vocab.token_count
 TGT_VOCAB_SIZE = tgt_vocb.token_count
 
+dropout = 0.1
 model = Seq2SeqTransformer(Config.NUM_ENCODER_LAYERS, Config.NUM_DECODER_LAYERS, Config.EMB_SIZE, 
-                           Config.NHEAD, SRC_VOCAB_SIZE, TGT_VOCAB_SIZE, Config.FFN_HID_DIM)
+                                 Config.NHEAD, SRC_VOCAB_SIZE, TGT_VOCAB_SIZE, Config.FFN_HID_DIM, 0.1, Config.BATCH_FIRST)
+
 
 model = model.to(DEVICE)
 
-MODEL_PATH = 'checkpoints/val_best_ref.pth'
+MODEL_PATH = 'checkpoints/val_best.pth'
 model = Evaluation.load_checkpoint(model=model, load_path=MODEL_PATH, device=DEVICE)
 
 test_acc = Evaluation.test_acc(model=model)

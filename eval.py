@@ -37,19 +37,29 @@ class Evaluation:
         src_mask = src_mask.to(DEVICE)
 
         memory = model.encode(src, src_mask)
+
+        # (Batch Size, Seq Len) or (Seq Len, Batch Size)
         ys = torch.ones(1, 1).fill_(start_symbol).type(torch.long).to(DEVICE)
         for i in range(max_len-1):
+
             memory = memory.to(DEVICE)
-            tgt_mask = (MaskUtils.generate_square_subsequent_mask(ys.size(0))
+            
+            seq_len_current = ys.size(1) if config.Config.BATCH_FIRST else ys.size(0)
+
+            tgt_mask = (MaskUtils.generate_square_subsequent_mask(seq_len_current)
                         .type(torch.bool)).to(DEVICE)
             out = model.decode(ys, memory, tgt_mask)
-            out = out.transpose(0, 1)
+
+            out = out if config.Config.BATCH_FIRST else out.transpose(0, 1)
+
             prob = model.generator(out[:, -1])
             _, next_word = torch.max(prob, dim=1)
             next_word = next_word.item()
 
+            dim_append = 1 if config.Config.BATCH_FIRST else 0
             ys = torch.cat([ys,
-                            torch.ones(1, 1).type_as(src.data).fill_(next_word)], dim=0)
+                            torch.ones(1, 1).type_as(src.data).fill_(next_word)], dim=dim_append)
+                            
             if next_word == DataClass.src_vocab_cls.EOS_INDEX:
                 break
         return ys
@@ -59,8 +69,11 @@ class Evaluation:
     @staticmethod
     def expand_polynomial(model: torch.nn.Module, src_sentence: str):
         model.eval()
-        src = DataClass.text_transform_map()['src'](src_sentence).view(-1, 1)
-        num_tokens = src.shape[0]
+        src = DataClass.text_transform_map()['src'](src_sentence)
+        src = src.view(1, -1) if config.Config.BATCH_FIRST else src.view(-1, 1)
+
+        num_tokens = src.shape[1] if config.Config.BATCH_FIRST else src.shape[0]
+        
         src_mask = (torch.zeros(num_tokens, num_tokens)).type(torch.bool)
         tgt_tokens = Evaluation.greedy_decode(
             model,  src, src_mask, max_len=config.Config.MAX_LEN, start_symbol=DataClass.src_vocab_cls.SOS_INDEX).flatten()

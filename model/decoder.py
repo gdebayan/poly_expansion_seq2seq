@@ -7,9 +7,6 @@ import sys
 
 sys.path.insert(0, '../')
 
-import config
-DEVICE = config.Config.DEVICE
-
 from model.decoder_layer import DecoderLayer
 
 class Decoder(nn.Module):

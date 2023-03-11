@@ -7,9 +7,6 @@ import sys
 
 sys.path.insert(0, '../')
 
-import config
-DEVICE = config.Config.DEVICE
-
 from model.encoder_layer import EncoderLayer
 
 class Encoder(nn.Module):

@@ -7,14 +7,12 @@ import math
 
 sys.path.insert(0, '../')
 
-import config
-DEVICE = config.Config.DEVICE
 
 class TokenEmbedding(nn.Module):
     def __init__(self, vocab_size: int, emb_size):
         """Module to convert tensor of input indices into corresponding tensor of token embeddings."""
         super(TokenEmbedding, self).__init__()
-        self.embedding = nn.Embedding(vocab_size, emb_size, device=DEVICE)
+        self.embedding = nn.Embedding(vocab_size, emb_size)
         self.emb_size = emb_size
 
     def forward(self, tokens: Tensor):

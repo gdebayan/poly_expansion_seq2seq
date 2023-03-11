@@ -7,9 +7,6 @@ import sys
 
 sys.path.insert(0, '../')
 
-import config
-DEVICE = config.Config.DEVICE
-
 
 class PositionwiseFeedforwardLayer(nn.Module):
     def __init__(self, hid_dim, pf_dim, dropout):

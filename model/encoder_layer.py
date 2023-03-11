@@ -7,9 +7,6 @@ import sys
 
 sys.path.insert(0, '../')
 
-import config
-DEVICE = config.Config.DEVICE
-
 from model.position_wise_fc import PositionwiseFeedforwardLayer
 from model.multi_head_attention import MultiHeadAttentionLayer
 

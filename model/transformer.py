@@ -7,13 +7,11 @@ import sys
 
 sys.path.insert(0, '../')
 
-import config
-DEVICE = config.Config.DEVICE
-
 from model.encoder import Encoder
 from model.decoder import Decoder
 from model.token_embed import TokenEmbedding
 from model.pos_encoding import PositionalEncoding
+
 from data_utils.polynomial_vocab import PolynomialVocab
 
 
@@ -27,8 +25,8 @@ class Seq2SeqTransformer(nn.Module):
                  tgt_vocab_size: int,
                  dim_feedforward: int=512,
                  dropout: float=0.1,
-                 src_pad_idx=PolynomialVocab.PAD_INDEX,
-                 tgt_pad_idx=PolynomialVocab.PAD_INDEX):
+                 src_pad_idx=1,
+                 tgt_pad_idx=1):
         super().__init__()
 
         self.encoder = Encoder(hid_dim=emb_size, 
@@ -43,7 +41,7 @@ class Seq2SeqTransformer(nn.Module):
                                dropout=dropout,
                                pf_dim=dim_feedforward)
 
-        self.generator = nn.Linear(emb_size, tgt_vocab_size, device=DEVICE)
+        self.generator = nn.Linear(emb_size, tgt_vocab_size)
         self.src_tok_emb = TokenEmbedding(src_vocab_size, emb_size)
         self.tgt_tok_emb = TokenEmbedding(tgt_vocab_size, emb_size)
         self.positional_encoding = PositionalEncoding(
@@ -72,7 +70,7 @@ class Seq2SeqTransformer(nn.Module):
         
         tgt_len = tgt.shape[1]
         
-        tgt_sub_mask = torch.tril(torch.ones((tgt_len, tgt_len), device = DEVICE)).bool()
+        tgt_sub_mask = torch.tril(torch.ones((tgt_len, tgt_len), device=tgt.device)).bool()
         
         #tgt_sub_mask = [tgt len, tgt len]
             

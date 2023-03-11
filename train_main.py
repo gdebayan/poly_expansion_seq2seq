@@ -6,6 +6,8 @@ from data_utils.polynomial_vocab import PolynomialVocab
 
 from model.transformer import Seq2SeqTransformer
 
+DEVICE = Config.DEVICE
+
 src_vocab, tgt_vocb = DataClass.src_vocab_cls, DataClass.tgt_vocab_cls
 
 
@@ -19,6 +21,7 @@ dropout = 0.1
 model = Seq2SeqTransformer(Config.NUM_ENCODER_LAYERS, Config.NUM_DECODER_LAYERS, Config.EMB_SIZE, 
                           Config.NHEAD, SRC_VOCAB_SIZE, TGT_VOCAB_SIZE, Config.FFN_HID_DIM, dropout,
                           SRC_PAD_INDEX, TGT_PAD_INDEX)
+model = model.to(DEVICE)
 
 loss_fn = torch.nn.CrossEntropyLoss(ignore_index=DataClass.src_vocab_cls.PAD_INDEX)
 optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, betas=(0.9, 0.98), eps=1e-9)

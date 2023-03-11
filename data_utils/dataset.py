@@ -13,7 +13,7 @@ from data_utils.dataset_utils import DatasetUtils
 from data_utils.polynomial_vocab import PolynomialVocab
 import config
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+DEVICE = config.Config.DEVICE
 
 class VocabDataset(torch.utils.data.Dataset):
     """
@@ -120,8 +120,8 @@ class DataClass:
             src_batch.append(DataClass.text_transform_map()['src'](src_sample))
             tgt_batch.append(DataClass.text_transform_map()['tgt'](tgt_sample))
 
-        src_batch = pad_sequence(src_batch, padding_value=PolynomialVocab.PAD_INDEX, batch_first=config.Config.BATCH_FIRST)
-        tgt_batch = pad_sequence(tgt_batch, padding_value=PolynomialVocab.PAD_INDEX, batch_first=config.Config.BATCH_FIRST)
+        src_batch = pad_sequence(src_batch, padding_value=PolynomialVocab.PAD_INDEX, batch_first=True)
+        tgt_batch = pad_sequence(tgt_batch, padding_value=PolynomialVocab.PAD_INDEX, batch_first=True)
         return src_batch, tgt_batch
 
     @staticmethod

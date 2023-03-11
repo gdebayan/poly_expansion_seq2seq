@@ -2,12 +2,12 @@ from torch import Tensor
 import torch
 import torch.nn as nn
 import os
-from model.mask import MaskUtils
 import config
 from tqdm import tqdm
 from data_utils.dataset import DataClass 
+from config import Config
 
-DEVICE = 'cpu'
+DEVICE = Config.DEVICE
 
 import logging
 logging.basicConfig(level = config.Config.LOGGING_LEVEL)
@@ -32,31 +32,26 @@ class Evaluation:
 
     # function to generate output sequence using greedy algorithm 
     @staticmethod
-    def greedy_decode(model, src, src_mask, max_len, start_symbol):
+    def greedy_decode(model, src, max_len, start_symbol):
         src = src.to(DEVICE)
-        src_mask = src_mask.to(DEVICE)
 
-        memory = model.encode(src, src_mask)
+        src_mask = model.make_src_mask(src)
+        enc_src = model.encode(src, src_mask)
 
-        # (Batch Size, Seq Len) or (Seq Len, Batch Size)
+        # (Batch Size, Seq Len)
         ys = torch.ones(1, 1).fill_(start_symbol).type(torch.long).to(DEVICE)
         for i in range(max_len-1):
-
-            memory = memory.to(DEVICE)
             
-            seq_len_current = ys.size(1) if config.Config.BATCH_FIRST else ys.size(0)
+            tgt_mask =  model.make_tgt_mask(tgt=ys)
+            out, attention = model.decode(tgt=ys, enc_src=enc_src, tgt_mask=tgt_mask, src_mask=src_mask)
+            prob = model.generator(out)
 
-            tgt_mask = (MaskUtils.generate_square_subsequent_mask(seq_len_current)
-                        .type(torch.bool)).to(DEVICE)
-            out = model.decode(ys, memory, tgt_mask)
+            prob = prob[:,-1,:]
 
-            out = out if config.Config.BATCH_FIRST else out.transpose(0, 1)
-
-            prob = model.generator(out[:, -1])
             _, next_word = torch.max(prob, dim=1)
             next_word = next_word.item()
 
-            dim_append = 1 if config.Config.BATCH_FIRST else 0
+            dim_append = 1
             ys = torch.cat([ys,
                             torch.ones(1, 1).type_as(src.data).fill_(next_word)], dim=dim_append)
                             
@@ -70,13 +65,12 @@ class Evaluation:
     def expand_polynomial(model: torch.nn.Module, src_sentence: str):
         model.eval()
         src = DataClass.text_transform_map()['src'](src_sentence)
-        src = src.view(1, -1) if config.Config.BATCH_FIRST else src.view(-1, 1)
+        src = src.view(1, -1)
 
-        num_tokens = src.shape[1] if config.Config.BATCH_FIRST else src.shape[0]
+        num_tokens = src.shape[1]
         
-        src_mask = (torch.zeros(num_tokens, num_tokens)).type(torch.bool)
         tgt_tokens = Evaluation.greedy_decode(
-            model,  src, src_mask, max_len=config.Config.MAX_LEN, start_symbol=DataClass.src_vocab_cls.SOS_INDEX).flatten()
+            model,  src, max_len=config.Config.MAX_LEN, start_symbol=DataClass.src_vocab_cls.SOS_INDEX).flatten()
         tgt_tokens = tgt_tokens[1:-1]
         op = [DataClass.tgt_vocab_cls.index_to_token[tok.item()] for tok in tgt_tokens]
         return ''.join(op)

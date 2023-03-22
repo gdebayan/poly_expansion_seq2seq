@@ -2,11 +2,10 @@ from torch import Tensor
 import torch
 import torch.nn as nn
 import os
-from model.mask import MaskUtils
 import config
 from time import time
 
-DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+DEVICE = config.Config.DEVICE
 
 import logging
 logging.basicConfig(level = config.Config.LOGGING_LEVEL)
@@ -71,15 +70,14 @@ class Trainer:
             src = src.to(DEVICE)
             tgt = tgt.to(DEVICE)
 
-            tgt_input = tgt[:-1, :] # remove EOS from input
+            tgt_input = tgt[:, :-1] # remove EOS from input
 
-            src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = MaskUtils.create_mask(src, tgt_input)
-
-            logits = model(src, tgt_input, src_mask, tgt_mask,src_padding_mask, tgt_padding_mask, src_padding_mask)
+            logits = model(src, tgt_input)
 
             optimizer.zero_grad()
 
-            tgt_out = tgt[1:, :]
+            tgt_out = tgt[:, 1:] # Remove SOS from tgt
+
             loss = loss_fn(logits.reshape(-1, logits.shape[-1]), tgt_out.reshape(-1))
             loss.backward()
 
@@ -98,13 +96,11 @@ class Trainer:
             src = src.to(DEVICE)
             tgt = tgt.to(DEVICE)
 
-            tgt_input = tgt[:-1, :]
+            tgt_input = tgt[:, :-1] # remove EOS from input
 
-            src_mask, tgt_mask, src_padding_mask, tgt_padding_mask = MaskUtils.create_mask(src, tgt_input)
+            logits = model(src, tgt_input)
 
-            logits = model(src, tgt_input, src_mask, tgt_mask,src_padding_mask, tgt_padding_mask, src_padding_mask)
-            
-            tgt_out = tgt[1:, :]
+            tgt_out = tgt[:, 1:] # Remove SOS from tgt
             loss = loss_fn(logits.reshape(-1, logits.shape[-1]), tgt_out.reshape(-1))
             losses += loss.item()
 

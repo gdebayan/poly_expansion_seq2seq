@@ -36,7 +36,7 @@ class Evaluation:
         src = src.to(DEVICE)
 
         src_mask = model.make_src_mask(src)
-        enc_src = model.encode(src, src_mask)
+        enc_src = model.encode(src, src_mask, None)
 
         # (Batch Size, Seq Len)
         ys = torch.ones(1, 1).fill_(start_symbol).type(torch.long).to(DEVICE)
@@ -86,6 +86,9 @@ class Evaluation:
             op = Evaluation.expand_polynomial(model, src)
             if op == tgt:
                 num_correct += 1
+            else:
+                print("Pred OP", op)
+                print("Pred TGT", tgt)
 
             tot += 1
             

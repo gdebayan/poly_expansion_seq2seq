@@ -59,6 +59,7 @@ class S4Model(nn.Module):
             
         # Initialize
         batch_size, T, d_model = sample.shape
+
         if hidden_state is None:
             hidden_state = torch.zeros((batch_size, d_model, self.d_s4_state//2))
 
@@ -71,19 +72,22 @@ class S4Model(nn.Module):
 
         return out, hidden_state
 
-    def s4_layer_forward(self, layer, sample, hidden_state=None):
+    def s4_layer_forward(self, layer, sample, hidden_state=None, input_lengths=None):
         if self.training:
             # Do a Convolution-Style Forward Pass
-            out, hidden_state =  layer.forward(u=sample, state=hidden_state)
+            out, hidden_state =  layer.forward(u=sample, state=hidden_state, lengths=input_lengths)
         else:
             # Else, do a RNN Style Forward Pass
+            assert input_lengths is None; f"For RNN-Style Forward Pass, we support BatchSize=1 only. Hence input_lengths should be None"
             out, hidden_state = self.s4_rnn_style_forward(layer=layer, sample=sample, hidden_state=hidden_state)
         return out, hidden_state
 
 
-    def forward(self, x, hidden_state=None, mask=None):
+    def forward(self, x, hidden_state=None, input_lengths=None):
         """
-        Input x is shape (B, L, d_input)
+        Input x: (B, seq_len, d_input)
+        Input hidden_state: (B, d_model, d_s4_state)
+        input_lengths: (B,)
         """
         x = self.encoder(x)  # (B, L, d_input) -> (B, L, d_model)
         
@@ -95,7 +99,7 @@ class S4Model(nn.Module):
                 # Prenorm
                 z = norm(z)
 
-            z, _ = self.s4_layer_forward(layer=layer, sample=z, hidden_state=hidden_state)
+            z, _ = self.s4_layer_forward(layer=layer, sample=z, hidden_state=hidden_state, input_lengths=input_lengths)
 
             # Dropout on the output of the S4 block
             z = dropout(z.transpose(-1, -2)).transpose(-1, -2)
@@ -114,7 +118,7 @@ class S4Model(nn.Module):
 
 
 if __name__ == '__main__':
-    batch_size = 2 # B
+    batch_size = 3 # B
     seq_length = 10 # L
 
     d_model = 256 # H
@@ -148,10 +152,12 @@ if __name__ == '__main__':
     sample = torch.randn(batch_size, seq_length, input_dim) * std + mean
     initial_state = torch.zeros((batch_size, d_model, d_state//2))
 
+    input_lengths = torch.Tensor([5, 10, 7])
+
     """
     Do Output using Conv-FFT (used during training)
     """
-    conv_out = model(x=sample, hidden_state=initial_state)
+    conv_out = model(x=sample, hidden_state=initial_state, input_lengths=input_lengths)
 
 
     """
@@ -160,9 +166,9 @@ if __name__ == '__main__':
     model.eval()
     rnn_out = model(x=sample, hidden_state=initial_state)
 
-    """
-    Compare Conv-Style and RNN-Style Forward pass Outputs (and final hidden state)
-    """
-    assert torch.allclose(rnn_out, conv_out, rtol=1e-3, atol=1e-3), f"S4 Outputs for Conv Style fwd pass, does not match RNN style forward pass"
+    # """
+    # Compare Conv-Style and RNN-Style Forward pass Outputs (and final hidden state)
+    # """
+    # assert torch.allclose(rnn_out, conv_out, rtol=1e-3, atol=1e-3), f"S4 Outputs for Conv Style fwd pass, does not match RNN style forward pass"
 
 

@@ -1496,6 +1496,7 @@ class S4(nn.Module):
             mask = torch.where(torch.arange(L, device=lengths.device) < lengths[:, None, None], 1., 0.)
             u = u * mask
 
+
         if self.gate is not None:
             v = self.input_gate(u)
         if self.bottleneck is not None:

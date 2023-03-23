@@ -69,10 +69,14 @@ class Trainer:
         for src, tgt, src_lens, tgt_lens in train_loader:
             src = src.to(DEVICE)
             tgt = tgt.to(DEVICE)
+            src_lens = src_lens.to(DEVICE)
+            tgt_lens = tgt_lens.to(DEVICE)
 
             tgt_input = tgt[:, :-1] # remove EOS from input
+            tgt_lens = tgt_lens - 1
 
-            logits = model(src, tgt_input)
+            # logits = model(src, tgt_input)
+            logits = model(src, tgt_input, src_lens, tgt_lens)
 
             optimizer.zero_grad()
 
@@ -95,10 +99,14 @@ class Trainer:
         for src, tgt, src_lens, tgt_lens in val_loader:
             src = src.to(DEVICE)
             tgt = tgt.to(DEVICE)
+            src_lens = src_lens.to(DEVICE)
+            tgt_lens = tgt_lens.to(DEVICE)
 
             tgt_input = tgt[:, :-1] # remove EOS from input
+            tgt_lens = tgt_lens - 1
 
-            logits = model(src, tgt_input)
+            # logits = model(src, tgt_input)
+            logits = model(src, tgt_input, src_lens, tgt_lens)
 
             tgt_out = tgt[:, 1:] # Remove SOS from tgt
             loss = loss_fn(logits.reshape(-1, logits.shape[-1]), tgt_out.reshape(-1))

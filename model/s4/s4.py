@@ -1117,7 +1117,6 @@ class SSKernelDiag(OptimModule):
         A = repeat(A, 't n -> (v t) n', v=self.repeat)
         dtA = A * dt.unsqueeze(-1)  # (H N)
 
-        print('dtA', dtA.shape)
 
         # Augment B with state
         if state is not None:
@@ -1581,36 +1580,11 @@ class S4(nn.Module):
 
 
 if __name__ == '__main__':
-    """
-d_model,
-            d_state=64,
-            l_max=None,
-            channels=1,
-            bidirectional=False,
-            # Arguments for position-wise feedforward components
-            activation='gelu',
-            postact='glu',
-            hyper_act=None,
-            dropout=0.0, tie_dropout=False,
-            bottleneck=None,
-            gate=None,
-            transposed=True,
-            verbose=False,
-            mode='diag',
-            # SSM Kernel arguments
-            **kernel_args,
-
-
-        Should it be this? :: ---->
-        state: (B, H, N)
-        u: (B, H, L)
-        Returns: same shape as u
-    """
     batch_size = 2 # B
     seq_length = 10 # L
     d_model = 8 # H
 
-    d_state = 128
+    d_state = 128 # N
     max_seq_len = 50
 
     s4_model = S4(d_model=d_model, 
@@ -1626,19 +1600,40 @@ d_model,
     # Set the seed for reproducibility
     torch.manual_seed(42)
 
-    # Generate a random sample with mean=0 and std=1.5
+    """
+    Generate Random Sample, and define initial state
+    """
     mean = 0
     std = 0.5
     sample = torch.randn(batch_size, seq_length, d_model) * std + mean
-
     initial_state = torch.zeros((batch_size, d_model, d_state//2))
 
+    """
+    Do Output using Conv-FFT (used during training)
+    """
+    conv_out, conv_state = s4_model.forward(u=sample, state=initial_state)
 
-    out = s4_model.forward(u=sample, state=initial_state)
+    """
+    Do Output using RNN style forward pass (used during Eval)
+    """
+    # Setup: required for S4 modules in RNN Style Forward pass
+    for module in s4_model.modules():
+        if hasattr(module, 'setup_step'): module.setup_step()
 
     s4_model.eval()
-    state = torch.zeros((batch_size, d_model, d_state))
 
-    out_step = s4_model.step(u=sample[:,0,:], state=initial_state)
+    # Initialize
+    rnn_out = torch.empty(batch_size, 0, d_model)
+    T = sample.shape[1]
+    rnn_state = initial_state
 
-    print('out step', out_step)
+    # Do forward pass
+    for t in range(0, T):
+        out_step, rnn_state = s4_model.step(u=sample[:,t,:], state=rnn_state)
+        rnn_out = torch.cat((rnn_out, out_step.unsqueeze(1)), dim=1)
+
+    """
+    Compare Conv-Style and RNN-Style Forward pass Outputs (and final hidden state)
+    """
+    assert torch.allclose(conv_state, rnn_state, rtol=1e-3, atol=1e-3), f"S4 hidden states for Conv Style fwd pass, does not match RNN style forward pass"
+    assert torch.allclose(rnn_out, conv_out, rtol=1e-3, atol=1e-3), f"S4 Outputs for Conv Style fwd pass, does not match RNN style forward pass"

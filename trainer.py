@@ -66,7 +66,7 @@ class Trainer:
         model.train()
         losses = 0
         
-        for src, tgt in train_loader:
+        for src, tgt, src_lens, tgt_lens in train_loader:
             src = src.to(DEVICE)
             tgt = tgt.to(DEVICE)
 
@@ -92,7 +92,7 @@ class Trainer:
         model.eval()
         losses = 0
 
-        for src, tgt in val_loader:
+        for src, tgt, src_lens, tgt_lens in val_loader:
             src = src.to(DEVICE)
             tgt = tgt.to(DEVICE)
 

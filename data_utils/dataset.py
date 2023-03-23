@@ -120,9 +120,12 @@ class DataClass:
             src_batch.append(DataClass.text_transform_map()['src'](src_sample))
             tgt_batch.append(DataClass.text_transform_map()['tgt'](tgt_sample))
 
+        src_lens = [len(sample) for sample in src_batch]
+        tgt_lens = [len(sample) for sample in tgt_batch]
+
         src_batch = pad_sequence(src_batch, padding_value=PolynomialVocab.PAD_INDEX, batch_first=True)
         tgt_batch = pad_sequence(tgt_batch, padding_value=PolynomialVocab.PAD_INDEX, batch_first=True)
-        return src_batch, tgt_batch
+        return src_batch, tgt_batch, src_lens, tgt_lens
 
     @staticmethod
     def train_dataloader():

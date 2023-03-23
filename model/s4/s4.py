@@ -1347,6 +1347,7 @@ class SSKernel(nn.Module):
         self.kernel._setup_step(**kwargs)
 
     def step(self, u, state, **kwargs):
+        state = state.to(u.device)
         y, state = self.kernel.step(u, state, **kwargs)
         return y, state
 

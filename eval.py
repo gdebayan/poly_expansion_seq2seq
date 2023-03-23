@@ -7,7 +7,7 @@ from tqdm import tqdm
 from data_utils.dataset import DataClass 
 from config import Config
 
-DEVICE = Config.DEVICE
+DEVICE = 'cuda:3'
 
 import logging
 logging.basicConfig(level = config.Config.LOGGING_LEVEL)
@@ -43,7 +43,7 @@ class Evaluation:
         for i in range(max_len-1):
             
             tgt_mask =  model.make_tgt_mask(tgt=ys)
-            out, attention = model.decode(tgt=ys, enc_src=enc_src, tgt_mask=tgt_mask, src_mask=src_mask)
+            out, attention = model.decode(tgt=ys, enc_src=enc_src, tgt_mask=tgt_mask, src_mask=src_mask, tgt_lens=None)
             prob = model.generator(out)
 
             prob = prob[:,-1,:]

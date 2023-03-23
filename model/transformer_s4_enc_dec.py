@@ -9,6 +9,8 @@ sys.path.insert(0, '../')
 
 from model.encoder import Encoder
 from model.encoder_s4 import EncoderS4Attention
+from model.decoder_s4 import DecoderS4Attention
+
 from model.decoder import Decoder
 from model.token_embed import TokenEmbedding
 from model.pos_encoding import PositionalEncoding
@@ -27,7 +29,8 @@ class S4EncDec(nn.Module):
                  dim_feedforward: int=512,
                  dropout: float=0.1,
                  src_pad_idx=1,
-                 tgt_pad_idx=1):
+                 tgt_pad_idx=1,
+                 s4_conv_eval=True):
         super().__init__()
 
         # self.encoder = Encoder(hid_dim=emb_size, 
@@ -38,9 +41,14 @@ class S4EncDec(nn.Module):
         self.encoder = EncoderS4Attention(hid_dim=emb_size, 
                                             n_heads=nhead,
                                             dropout=dropout,
-                                            pf_dim=dim_feedforward) 
+                                            pf_dim=dim_feedforward,
+                                            s4_conv_eval=s4_conv_eval) 
 
-        self.decoder = 
+        self.decoder = DecoderS4Attention(hid_dim=emb_size, 
+                                            n_heads=nhead,
+                                            dropout=dropout,
+                                            pf_dim=dim_feedforward,
+                                            s4_conv_eval=s4_conv_eval)
         # self.decoder = Decoder(hid_dim=emb_size, 
         #                        n_layers=num_decoder_layers, 
         #                        n_heads=nhead, 
@@ -96,13 +104,13 @@ class S4EncDec(nn.Module):
 
         return enc_src
 
-    def decode(self, tgt, enc_src, tgt_mask, src_mask):
+    def decode(self, tgt, enc_src, tgt_mask, src_mask, tgt_lens):
         #tgt = [batch size, tgt len]
 
         tgt_emb = self.positional_encoding(self.tgt_tok_emb(tgt))
         #tgt_emb = [batch size, src len, dim]
 
-        output, attention = self.decoder(tgt_emb, enc_src, tgt_mask, src_mask)
+        output, attention = self.decoder(tgt_emb, enc_src, tgt_mask, src_mask, tgt_lens)
         #output = [batch size, tgt len, output dim]
         #attention = [batch size, n heads, tgt len, src len]
 
@@ -118,6 +126,7 @@ class S4EncDec(nn.Module):
         enc_src = self.encode(src=src, src_mask=src_mask, src_lens=src_lens)
 
         output, attention = self.decode(tgt=tgt, enc_src=enc_src, 
-                                         tgt_mask=tgt_mask, src_mask=src_mask)
+                                         tgt_mask=tgt_mask, src_mask=src_mask,
+                                         tgt_lens=tgt_lens)
 
         return self.generator(output)

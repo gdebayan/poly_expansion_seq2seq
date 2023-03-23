@@ -27,7 +27,8 @@ class S4Transformer(nn.Module):
                  dim_feedforward: int=512,
                  dropout: float=0.1,
                  src_pad_idx=1,
-                 tgt_pad_idx=1):
+                 tgt_pad_idx=1,
+                 s4_conv_eval=True):
         super().__init__()
 
         # self.encoder = Encoder(hid_dim=emb_size, 
@@ -38,7 +39,8 @@ class S4Transformer(nn.Module):
         self.encoder = EncoderS4Attention(hid_dim=emb_size, 
                                             n_heads=nhead,
                                             dropout=dropout,
-                                            pf_dim=dim_feedforward) 
+                                            pf_dim=dim_feedforward,
+                                            s4_conv_eval=s4_conv_eval) 
 
         self.decoder = Decoder(hid_dim=emb_size, 
                                n_layers=num_decoder_layers, 

@@ -6,7 +6,7 @@ from trainer import Trainer
 from config import Config
 from data_utils.dataset import DataClass
 from data_utils.polynomial_vocab import PolynomialVocab
-from model.transformer_s4 import S4Transformer
+from model.transformer_s4_enc_dec import S4EncDec
 
 import logging
 logging.basicConfig(level = Config.LOGGING_LEVEL)
@@ -22,9 +22,9 @@ SRC_PAD_INDEX = PolynomialVocab.PAD_INDEX
 TGT_PAD_INDEX = PolynomialVocab.PAD_INDEX
 
 dropout = 0.1
-model = S4Transformer(Config.NUM_ENCODER_LAYERS, Config.NUM_DECODER_LAYERS, Config.EMB_SIZE, 
+model = S4EncDec(Config.NUM_ENCODER_LAYERS, Config.NUM_DECODER_LAYERS, Config.EMB_SIZE, 
                           Config.NHEAD, SRC_VOCAB_SIZE, TGT_VOCAB_SIZE, Config.FFN_HID_DIM, dropout,
-                          SRC_PAD_INDEX, TGT_PAD_INDEX, False)
+                          SRC_PAD_INDEX, TGT_PAD_INDEX, True)
 
 
 model = model.to(DEVICE)

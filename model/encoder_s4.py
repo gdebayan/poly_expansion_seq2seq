@@ -15,12 +15,13 @@ class EncoderS4Attention(nn.Module):
                  hid_dim, 
                  n_heads, 
                  dropout, 
-                 pf_dim):
+                 pf_dim,
+                 s4_conv_eval):
         super().__init__()
                 
         self.layers = nn.ModuleList([EncoderLayer(hid_dim, n_heads, pf_dim, dropout),
-                                     S4Layer(d_input=hid_dim, d_s4_state=64, d_output=hid_dim, d_model=hid_dim, dropout=0),
-                                     S4Layer(d_input=hid_dim, d_s4_state=64, d_output=hid_dim, d_model=hid_dim, dropout=0),
+                                     S4Layer(d_input=hid_dim, d_s4_state=64, d_output=hid_dim, d_model=hid_dim, dropout=0, conv_validation=s4_conv_eval),
+                                     S4Layer(d_input=hid_dim, d_s4_state=64, d_output=hid_dim, d_model=hid_dim, dropout=0, conv_validation=s4_conv_eval),
                                      EncoderLayer(hid_dim, n_heads, pf_dim, dropout)])
         
         self.dropout = nn.Dropout(dropout)

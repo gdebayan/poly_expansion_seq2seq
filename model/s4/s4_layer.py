@@ -53,7 +53,7 @@ class S4Layer(nn.Module):
         if hidden_state is None:
             hidden_state = torch.zeros((batch_size, d_model, self.d_s4_state//2))
 
-        out = torch.empty(batch_size, 0, d_model)
+        out = torch.empty(batch_size, 0, d_model, device=sample.device)
 
         # Do forward pass
         for t in range(0, T):
